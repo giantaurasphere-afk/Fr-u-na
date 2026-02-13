@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Valentine ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;800&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* --- RESET & CORE --- */
+        :root { --primary: #ff4081; --glass: rgba(255, 255, 255, 0.95); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        /* --- SCREENS (Forceful Hiding) --- */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; /* Hidden by default */
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10;
+        }
+        .screen.active { display: flex; } /* Only active is visible */
+
+        /* --- BACKGROUNDS --- */
+        .bg-lock { background: linear-gradient(135deg, #1a1a1a, #000); }
+        .bg-pink { background: radial-gradient(circle, #fce4ec, #f8bbd0); }
+        .bg-blue { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+        .bg-dark { background: #111; color: white; }
+
+        /* --- GLASS BOX --- */
+        .glass-box {
+            background: var(--glass);
+            padding: 25px; border-radius: 20px;
+            text-align: center; width: 90%; max-width: 380px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border: 2px solid #fff; z-index: 20; /* Above animations */
+            position: relative;
+        }
+
+        /* --- TEXT --- */
+        h2 { color: #333; margin-bottom: 15px; font-weight: 700; font-size: 1.5rem; }
+        p { color: #555; font-size: 1rem; margin-bottom: 20px; }
+        .cursive { font-family: 'Dancing Script', cursive; font-size: 2rem; color: var(--primary); }
+
+        /* --- BUTTONS --- */
+        .glow-btn {
+            padding: 12px 30px; border-radius: 50px; border: none;
+            background: linear-gradient(45deg, #ff4081, #ff80ab);
+            color: white; font-weight: bold; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 64, 129, 0.4);
+            margin-top: 10px; font-size: 1rem; position: relative; z-index: 30;
+        }
+        .glow-btn:active { transform: scale(0.95); }
+        .hidden { display: none !important; }
+
+        /* --- ANIMATION CONTAINER (Fixed Z-Index Issue) --- */
+        #animContainer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; /* KEY FIX: Clicks pass through */
+            z-index: 5; overflow: hidden;
+        }
+        .falling-love {
+            position: absolute; font-size: 1.5rem;
+            animation: fallDown linear forwards;
+        }
+
+        /* --- GIFT --- */
+        .gift-emoji { font-size: 7rem; animation: float 3s infinite; display:block; margin-bottom:10px; }
+
+        /* --- GAME --- */
+        #gameArea {
+            width: 100%; height: 50vh; background: rgba(255,255,255,0.2);
+            border: 2px solid white; border-radius: 15px; position: relative;
+            overflow: hidden; touch-action: none;
+        }
+        .basket {
+            width: 70px; height: 50px; background: #ff4081; border-radius: 10px 10px 0 0;
+            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+        }
+        .falling-heart { position: absolute; font-size: 2rem; z-index: 15; }
+
+        /* --- PLANE --- */
+        .plane-container { position: absolute; top: 20%; left: -100px; z-index: 15; }
+        .fly-anim { animation: flyAcross 6s linear forwards; }
+
+        /* --- ENVELOPE --- */
+        .envelope-wrapper {
+            width: 240px; height: 150px; background: #ff4081; margin: 0 auto 20px;
+            position: relative; cursor: pointer; border-radius: 0 0 10px 10px;
+        }
+        .lid {
+            position: absolute; top: 0; width: 0; height: 0;
+            border-left: 120px solid transparent; border-right: 120px solid transparent;
+            border-top: 90px solid #ff80ab; transform-origin: top; transition: 0.5s; z-index: 5;
+        }
+        .envelope-wrapper.open .lid { transform: rotateX(180deg); z-index: 1; }
+        .letter {
+            position: absolute; top: 5px; left: 10px; width: 220px; height: 130px;
+            background: white; padding: 15px; font-size: 0.85rem; color: #333;
+            transition: 0.5s; z-index: 2; overflow-y: auto; text-align: left; border-radius: 5px;
+        }
+        .envelope-wrapper.open .letter { transform: translateY(-100px); height: 220px; z-index: 6; }
+
+        /* --- IMAGE COMPOSITE --- */
+        .composite-box { position: relative; width: 280px; height: 280px; margin: 0 auto 20px; }
+        .bg-img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; opacity: 0; transition: 1s; }
+        .circle-img {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            width: 120px; height: 120px; border-radius: 50%; border: 4px solid white;
+            overflow: hidden; box-shadow: 0 0 20px rgba(255, 64, 129, 0.5); transition: 1s;
+        }
+        .circle-img img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- VIDEO --- */
+        .video-box { width: 100%; border-radius: 10px; overflow: hidden; border: 3px solid white; background:black; }
+        video { width: 100%; display: block; }
+
+        /* --- POPUPS --- */
+        .popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 100;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .msg-popup {
+            background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 350px;
+            text-align: center; animation: popIn 0.3s ease;
+        }
+
+        /* --- LOCK SCREEN --- */
+        .pass-input {
+            width: 100%; padding: 12px; margin: 15px 0; border-radius: 50px;
+            text-align: center; font-size: 1rem; border: none; background: #eee;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes flyAcross { 0% { left: -150px; transform: rotate(10deg); } 100% { left: 120%; transform: rotate(10deg); } }
+        @keyframes fallDown { to { transform: translateY(110vh); } }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-10px);} 75% {transform: translateX(10px);} }
+        .shake { animation: shake 0.3s ease-in-out; border: 2px solid red !important; }
+
+    </style>
+</head>
+<body>
+
+    <audio id="bgMusic" loop>
+        <source src="song.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="animContainer"></div>
+
+    <div id="s1" class="screen active bg-lock">
+        <div class="glass-box">
+            <h1 style="color:white; font-size:3rem;">❤️</h1>
+            <h2 style="color:white;">Valentine Lock</h2>
+            <input type="password" id="passInput" class="pass-input" placeholder="Enter: loveyou4ever">
+            <button class="glow-btn" onclick="checkPass()">Unlock</button>
+        </div>
+    </div>
+
+    <div id="s2" class="screen bg-pink">
+        <div class="glass-box">
+            <h2 class="cursive">Happy Valentine's Day Babe!</h2>
+            <span class="gift-emoji">💐🍫</span>
+            <p>I want to tell you something 🫠</p>
+            <button class="glow-btn" onclick="goToScreen('s3')">sayy, dear</button>
+        </div>
+    </div>
+
+    <div id="s3" class="screen bg-blue">
+        <div class="glass-box">
+            <h2>Will you be my valentine? 🫠</h2>
+            <button class="glow-btn" onclick="showVid2()">let me think 🤔</button>
+        </div>
+    </div>
+
+    <div id="popVid2" class="popup-overlay">
+        <div class="video-box" style="width: 85%;">
+            <video id="vid2" loop playsinline>
+                <source src="video2.mp4" type="video/mp4">
+            </video>
+        </div>
+        <p id="vid2Text" class="hidden" style="color:white; margin-top:20px; font-size:1.2rem;">Abhi bhi sochna hai kya ? 🥺</p>
+        <button id="btnVid2" class="glow-btn hidden" onclick="goToScreen('s4')">Itni jldi haan nhi bolungi 🤭</button>
+    </div>
+
+    <div id="s4" class="screen bg-pink">
+        <div class="plane-container" id="planeObj">
+            <div style="font-size:4rem;">✈️</div>
+        </div>
+        
+        <div id="envelopeSection" class="hidden glass-box">
+            <h2>Choose One!</h2>
+            <div>
+                <button class="glow-btn" onclick="showLetter()">❤️</button>
+                <button class="glow-btn" onclick="showLetter()">❤️❤️</button>
+            </div>
+        </div>
+
+        <div id="letterSection" class="hidden glass-box">
+            <div class="envelope-wrapper" onclick="openEnvelope()">
+                <div class="lid"></div>
+                <div class="letter">
+                    My Dearest Love,<br><br>
+                    Every day with you is special. I promise to love you, annoy you, and make you smile forever. Please be my Valentine? ❤️<br><br>
+                    I love you!
+                </div>
+            </div>
+            <p>Tap to open</p>
+            <button id="btnLetter" class="glow-btn hidden" onclick="goToScreen('s5')">Continue</button>
+        </div>
+    </div>
+
+    <div id="s5" class="screen bg-blue">
+        <div class="glass-box">
+            <p>abhi tak convince nhi huye ? 😭 Please be my valentine 🤗</p>
+            <button class="glow-btn" onclick="goToScreen('s6')">thora aur sabar karo 🤭</button>
+        </div>
+    </div>
+
+    <div id="s6" class="screen bg-dark">
+        <div class="glass-box" style="background:rgba(255,255,255,0.1); border:none;">
+            <h2 style="color:white;">Catch 5 Hearts! ❤️</h2>
+            <p id="gameScore" style="color:#ff4081;">Score: 0</p>
+            <div id="gameArea" ontouchmove="moveBasket(event)" onmousemove="moveBasketMouse(event)">
+                <div id="basket" class="basket"></div>
+            </div>
+            <button id="btnGame" class="glow-btn hidden" onclick="goToScreen('s7')">Continue</button>
+        </div>
+    </div>
+
+    <div id="s7" class="screen bg-pink">
+        <div class="glass-box">
+            <p>I got to know that u have cigarette very often ? 🤨</p>
+            <button class="glow-btn" onclick="openPop('pop7_1')">yeah I don't think...</button>
+        </div>
+    </div>
+    
+    <div id="pop7_1" class="popup-overlay">
+        <div class="msg-popup">
+            <h3 style="color:red;">You are an addict! Quit it!</h3>
+            <button class="glow-btn" onclick="closePop('pop7_1'); openPop('pop7_2')">why ??</button>
+        </div>
+    </div>
+    <div id="pop7_2" class="popup-overlay">
+        <div class="msg-popup">
+            <h3 style="color:#ff4081;">Cause I am trying my best to be your favourite habit 😁</h3>
+            <button class="glow-btn" onclick="revealImagePage()">Continue</button>
+        </div>
+    </div>
+
+    <div id="s8" class="screen bg-blue">
+        <div class="glass-box">
+            <div class="composite-box">
+                <img src="template_bg.jpg" id="bgImg" class="bg-img" alt="BG">
+                <div class="circle-img" id="circleImg">
+                    <img src="her_photo.jpg" alt="Her">
+                </div>
+            </div>
+            <button id="btnImg" class="glow-btn hidden" onclick="goToScreen('s9')">Continue</button>
+        </div>
+    </div>
+
+    <div id="s9" class="screen bg-pink">
+        <div class="glass-box">
+            <p>I was doing an equation somedays ago !</p>
+            <button class="glow-btn" onclick="openPop('pop9_1')">oh okay !</button>
+        </div>
+    </div>
+    
+    <div id="pop9_1" class="popup-overlay">
+        <div class="msg-popup">
+            <p>Everything was balanced... but I couldn't find the solution 😕</p>
+            <button class="glow-btn" onclick="closePop('pop9_1'); openPop('pop9_2')">why!</button>
+        </div>
+    </div>
+    <div id="pop9_2" class="popup-overlay">
+        <div class="msg-popup">
+            <p style="color:#ff4081; font-weight:bold;">You were the only variable I needed ❤️</p>
+            <button class="glow-btn" onclick="goToScreen('s10')">that's cute 🥰</button>
+        </div>
+    </div>
+
+    <div id="s10" class="screen bg-dark">
+        <div class="video-box" style="width: 90%;">
+            <video id="vid1" playsinline>
+                <source src="video1.mp4" type="video/mp4">
+            </video>
+        </div>
+        <button id="btnFinal" class="glow-btn hidden" onclick="openPop('popFinal')">Continue</button>
+    </div>
+
+    <div id="popFinal" class="popup-overlay">
+        <div class="msg-popup">
+            <h2>So, one more time...<br>Will you be my valentine? 🙂</h2>
+            <button class="glow-btn" onclick="acceptFinal()">Yessssss 🫂</button>
+            <br>
+            <button class="glow-btn" style="background:#555;" onclick="alert('Try pressing Yes 😉')">Noo 😕</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CORE NAVIGATION ---
+        function goToScreen(id) {
+            // Hide all screens first
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.popup-overlay').forEach(p => p.style.display = 'none');
+            
+            // Show target screen
+            document.getElementById(id).classList.add('active');
+
+            // Screen Specific Triggers
+            if(id === 's2') startLoveRain();
+            if(id === 's4') startPlane();
+            if(id === 's6') initGame();
+            if(id === 's10') {
+                const v = document.getElementById('vid1');
+                v.play();
+                setTimeout(() => document.getElementById('btnFinal').classList.remove('hidden'), 15000);
+            }
+        }
+
+        // --- SECURITY ---
+        function checkPass() {
+            const val = document.getElementById('passInput').value.trim().toLowerCase();
+            if(val === "loveyou4ever") {
+                goToScreen('s2');
+                // Play music securely on interaction
+                const audio = document.getElementById('bgMusic');
+                audio.play().catch(e => console.log("Audio waiting"));
+            } else {
+                const inp = document.getElementById('passInput');
+                inp.classList.add('shake');
+                setTimeout(()=>inp.classList.remove('shake'), 400);
+            }
+        }
+
+        // --- VISUALS: FALLING LOVE RAIN (Replaces Fireworks) ---
+        function startLoveRain() {
+            const container = document.getElementById('animContainer');
+            setInterval(() => {
+                const e = document.createElement('div');
+                e.innerText = '💕';
+                e.className = 'falling-love';
+                e.style.left = Math.random() * 100 + 'vw';
+                e.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                container.appendChild(e);
+                setTimeout(() => e.remove(), 4000);
+            }, 300);
+        }
+
+        // --- POPUP UTILS ---
+        function openPop(id) { document.getElementById(id).style.display = 'flex'; }
+        function closePop(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- VIDEO 2 ---
+        function showVid2() {
+            document.getElementById('popVid2').style.display = 'flex';
+            document.getElementById('vid2').play();
+            setTimeout(() => {
+                document.getElementById('vid2Text').classList.remove('hidden');
+                document.getElementById('btnVid2').classList.remove('hidden');
+            }, 8000);
+        }
+
+        // --- PLANE & ENVELOPE ---
+        function startPlane() {
+            document.getElementById('planeObj').classList.add('fly-anim');
+            setTimeout(() => document.getElementById('envelopeSection').classList.remove('hidden'), 5000);
+        }
+        function showLetter() {
+            document.getElementById('envelopeSection').classList.add('hidden');
+            document.getElementById('letterSection').classList.remove('hidden');
+        }
+        function openEnvelope() {
+            document.querySelector('.envelope-wrapper').classList.toggle('open');
+            setTimeout(() => document.getElementById('btnLetter').classList.remove('hidden'), 4000);
+        }
+
+        // --- GAME ---
+        let score = 0;
+        function initGame() {
+            const area = document.getElementById('gameArea');
+            const interval = setInterval(() => {
+                const h = document.createElement('div');
+                h.innerText = '❤️';
+                h.className = 'falling-heart';
+                h.style.left = Math.random() * (area.clientWidth - 30) + 'px';
+                h.style.top = '-30px';
+                h.style.transition = 'top 3s linear';
+                area.appendChild(h);
+                
+                setTimeout(() => h.style.top = '100%', 10);
+
+                h.onclick = () => {
+                    score++;
+                    document.getElementById('gameScore').innerText = "Score: " + score;
+                    h.remove();
+                    if(score >= 5) {
+                        clearInterval(interval);
+                        document.getElementById('btnGame').classList.remove('hidden');
+                    }
+                };
+            }, 800);
+        }
+        function moveBasket(e) {
+            const x = e.touches[0].clientX - document.getElementById('gameArea').getBoundingClientRect().left - 35;
+            document.getElementById('basket').style.left = x + 'px';
+        }
+        function moveBasketMouse(e) {
+            const x = e.clientX - document.getElementById('gameArea').getBoundingClientRect().left - 35;
+            document.getElementById('basket').style.left = x + 'px';
+        }
+
+        // --- REVEAL IMAGE ---
+        function revealImagePage() {
+            closePop('pop7_2');
+            goToScreen('s8');
+            setTimeout(() => {
+                document.getElementById('bgImg').style.opacity = 1;
+                document.getElementById('circleImg').style.transform = "translate(-50%, -50%) scale(1)";
+                setTimeout(() => document.getElementById('btnImg').classList.remove('hidden'), 2000);
+            }, 500);
+        }
+
+        // --- FINAL ---
+        function acceptFinal() {
+            document.getElementById('popFinal').style.display = 'none';
+            alert("SHE SAID YES! Happy Valentine's Day! ❤️");
+        }
+    </script>
+</body>
+</html>
